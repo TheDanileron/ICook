@@ -32,7 +32,7 @@ class RecipeMapper {
                 recipe.summary,
                 recipe.instructions,
                 recipe.isVegan,
-                recipe.isHealthy
+                recipe.isHealthy,
             )
         }
 
@@ -52,7 +52,7 @@ class RecipeMapper {
                     recipe.summary,
                     recipe.instructions,
                     recipe.isVegan,
-                    recipe.isHealthy
+                    recipe.isHealthy,
                 ),
                 recipe.ingredients.map {
                     IngredientLocal(it.id, recipe.id ,it.name, it.unit, it.amount,)

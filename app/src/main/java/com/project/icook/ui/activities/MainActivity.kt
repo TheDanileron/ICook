@@ -3,19 +3,29 @@ package com.project.icook.ui.activities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
 import com.project.icook.R
+import com.project.icook.RecipeApplication
 import com.project.icook.ui.fragments.RecipeDetailsFragment
 import com.project.icook.ui.fragments.RecipeListFragment
+import com.project.icook.ui.view_models.RecipeViewModelFactory
+import com.project.icook.ui.view_models.SharedViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    val sharedViewModel: SharedViewModel by lazy{
+        val application = (applicationContext as RecipeApplication)
+        ViewModelProvider(this, RecipeViewModelFactory(application.recipeRepository, application.ingredientsRepository, application)).get(
+            SharedViewModel::class.java)}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        sharedViewModel.requestNetworkChanges()
         setupViewPager()
     }
 

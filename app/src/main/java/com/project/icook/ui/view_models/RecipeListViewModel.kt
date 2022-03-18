@@ -1,28 +1,38 @@
 package com.project.icook.ui.view_models
 
+import android.app.Application
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.project.icook.AppLogger
+import com.project.icook.ConnectionHelper
+import com.project.icook.OnNetworkAvailabilityListener
 import com.project.icook.model.data.Recipe
 import com.project.icook.model.data.RecipeDataSourceState
 import com.project.icook.model.repositories.RecipeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class RecipeListViewModel(private val recipeRepository: RecipeRepository): ViewModel() {
+class RecipeListViewModel(private val recipeRepository: RecipeRepository, application: Application): AndroidViewModel(application), OnNetworkAvailabilityListener {
     val TAG = "RecipeViewModel"
     val recipeList: MutableLiveData<List<Recipe>> = MutableLiveData(mutableListOf())
+    var sorting = Sorting.BY_TIME
     var isLocal: Boolean = false
 
     fun getRandomRecipeList() {
         viewModelScope.launch(Dispatchers.IO) {
-            recipeRepository.getRandomRecipes().let {result ->
-                if(result.isSuccess) {
-                    AppLogger.i(TAG, "Success, data: ${result.getOrDefault(mutableListOf())}")
-                    result.getOrNull()?.let { onListReceived(it) }
-                } else {
-                    AppLogger.i(TAG, result.toString())
+            if(ConnectionHelper.isNetworkAvailable) {
+                recipeRepository.getRandomRecipes().let {result ->
+                    if(result.isSuccess) {
+                        AppLogger.i(TAG, "Success, data: ${result.getOrDefault(mutableListOf())}")
+                        result.getOrNull()?.let { onListReceived(it) }
+                    } else {
+                        AppLogger.i(TAG, result.toString())
+                    }
                 }
             }
         }
@@ -45,9 +55,17 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository): ViewM
         this.isLocal = isLocal
         if(isLocal && recipeList.value!!.isEmpty())  {
             getSavedRecipesList()
-        } else if(recipeList.value!!.isEmpty()){
-            getRandomRecipeList()
+        } else{
+            ConnectionHelper.subscribe(this)
+            if(recipeList.value!!.isEmpty() && ConnectionHelper.isNetworkAvailable) {
+                getRandomRecipeList()
+            }
         }
+    }
+
+    override fun onCleared() {
+        ConnectionHelper.unsubscribe(this)
+        super.onCleared()
     }
 
     fun onCurrentRecipeStateChanged(state: RecipeDataSourceState) {
@@ -69,6 +87,37 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository): ViewM
             })
         }
         recipeList.postValue(list)
+    }
+
+    override fun onAvailable() {
+        if(!isLocal && recipeList.value!!.isEmpty()) {
+            getRandomRecipeList()
+        }
+    }
+
+    override fun onLost() {
+
+    }
+
+    fun sortingSwitched(sorting: Sorting) {
+        if(this.sorting != sorting){
+            this.sorting = sorting
+            val list = recipeList.value
+
+            when(sorting) {
+                Sorting.BY_TIME -> {
+                    recipeList.value = list?.sortedBy { it.readyInMinutes }
+                }
+                Sorting.BY_TITLE -> {
+                    recipeList.value = list?.sortedBy { it.title }
+                }
+            }
+        }
+    }
+
+
+    enum class Sorting{
+        BY_TIME, BY_TITLE
     }
 
 }

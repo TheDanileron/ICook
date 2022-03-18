@@ -17,4 +17,7 @@ data class Recipe(
     val isHealthy: Boolean,
     var isSaved: Boolean = false,
     @SerializedName("extendedIngredients")val ingredients: List<Ingredient> = mutableListOf()
-)
+) {
+    // set at the runtime, you can use it inside webview
+    var nutritionInfoHtml: String = ""
+}

@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "com.project.icook"
-        minSdk 21
+        minSdk 23
         targetSdk 31
         versionCode 1
         versionName "1.0"
@@ -39,6 +39,7 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$room_version"
 
     kapt("androidx.room:room-compiler:$room_version")
+    implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2"
     implementation 'com.google.code.gson:gson:2.8.6'

@@ -1,9 +1,16 @@
 package com.project.icook.ui.view_models
 
 import android.app.Application
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.project.icook.AppLogger
+import com.project.icook.ConnectionHelper
+import com.project.icook.OnNetworkAvailabilityListener
 import com.project.icook.R
 import com.project.icook.model.data.Recipe
 import com.project.icook.model.data.RecipeDataSourceState
@@ -13,9 +20,11 @@ import com.project.icook.model.repositories.RecipeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRepository: IngredientsRepository, application: Application): AndroidViewModel(application)  {
+class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRepository: IngredientsRepository, application: Application): AndroidViewModel(application), OnNetworkAvailabilityListener  {
+    val TAG = "SharedViewModel"
     val currentRecipe = MutableLiveData<Recipe>()
-    val state = MutableLiveData<RecipeDataSourceState>()
+    val dataSourceState = MutableLiveData<RecipeDataSourceState>()
+    val error = MutableLiveData<String>()
     val recipeTitle: String
         get() {
             return currentRecipe.value?.title ?: ""
@@ -52,39 +61,103 @@ class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRep
         get() {
             return currentRecipe.value?.ingredients?.joinToString("\n") ?: ""
         }
+    val nutritionInfo: String
+        get() {
+            return currentRecipe.value?.ingredients?.joinToString("\n") ?: ""
+        }
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            ConnectionHelper.onNetworkStateChanged(true)
+            super.onAvailable(network)
+        }
+
+        override fun onCapabilitiesChanged(
+            network: Network,
+            networkCapabilities: NetworkCapabilities
+        ) {
+            super.onCapabilitiesChanged(network, networkCapabilities)
+        }
+
+        override fun onLost(network: Network) {
+            ConnectionHelper.onNetworkStateChanged(false)
+            super.onLost(network)
+        }
+    }
+
+
+    fun requestNetworkChanges() {
+        val networkRequest = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .build()
+        val connectivityManager = getApplication<Application>().getSystemService(ConnectivityManager::class.java) as ConnectivityManager
+        connectivityManager.requestNetwork(networkRequest, networkCallback)
+    }
 
     fun onRecipeDataSourceOperationComplete() {
-        state.postValue(RecipeDataSourceState.IDLE)
+        dataSourceState.postValue(RecipeDataSourceState.IDLE)
     }
 
     fun saveMenuItemPressed() {
-        if(!isCurrentRecipeSaved) {
-            viewModelScope.launch(Dispatchers.IO) {
-                state.postValue(RecipeDataSourceState.SAVING)
+        viewModelScope.launch(Dispatchers.IO) {
+            if(!isCurrentRecipeSaved) {
+                dataSourceState.postValue(RecipeDataSourceState.SAVING)
 
                 val id = recipeRepository.saveRecipe(currentRecipe.value!!).getOrNull()
 
-                if(id != null) {
+                if (id != null) {
                     currentRecipe.value?.isSaved = true
-                    ingredientsRepository.saveIngredients(RecipeMapper.map(
-                        currentRecipe.value!!.ingredients, id))
+                    ingredientsRepository.saveIngredients(
+                        RecipeMapper.map(
+                            currentRecipe.value!!.ingredients, id
+                        )
+                    )
                 }
 
                 onRecipeDataSourceOperationComplete()
-            }
-        } else {
-            viewModelScope.launch(Dispatchers.IO) {
-                state.postValue(RecipeDataSourceState.DELETING)
+            }else {
+                dataSourceState.postValue(RecipeDataSourceState.DELETING)
 
-                val rowCount = recipeRepository.deleteRecipe(currentRecipe.value!!).getOrNull()
-
-                if(rowCount != null && rowCount > 0) {
-                    currentRecipe.value?.isSaved = false
-                    ingredientsRepository.deleteIngredients(RecipeMapper.map(currentRecipe.value!!.ingredients, -1))
-                }
+                recipeRepository.deleteRecipe(currentRecipe.value!!).getOrNull()
+                currentRecipe.value?.isSaved = false
 
                 onRecipeDataSourceOperationComplete()
+        }
+    }
+    }
+
+    fun calculateNutrition() {
+        viewModelScope.launch(Dispatchers.IO) {
+            if(ConnectionHelper.isNetworkAvailable) {
+                val result = recipeRepository.getNutrition(currentRecipe.value!!.ingredients)
+
+                if(result.isSuccess) {
+                    currentRecipe.value!!.nutritionInfoHtml = result.getOrDefault("")
+                    currentRecipe.postValue(currentRecipe.value)
+                    //todo show a webview fragment with nutrition visualization
+                } else {
+                    AppLogger.i(TAG, result.toString())
+                    error.postValue("Unable to get recipe nutrition")
+                }
+            } else {
+                error.postValue("Network not available")
             }
         }
     }
+
+    override fun onAvailable() {
+
+    }
+
+    override fun onLost() {
+
+    }
+
+    override fun onCleared() {
+        ConnectionHelper.unsubscribe(this)
+        super.onCleared()
+    }
+
 }

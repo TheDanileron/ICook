@@ -2,6 +2,7 @@ package com.project.icook.ui.fragments
 
 import android.os.Bundle
 import android.view.*
+import android.widget.Toast
 import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -14,7 +15,6 @@ import com.project.icook.ui.view_models.RecipeViewModelFactory
 import com.project.icook.ui.view_models.SharedViewModel
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.recipe_details_fragment.*
-import kotlinx.android.synthetic.main.recipe_details_fragment.view.*
 
 class RecipeDetailsFragment: Fragment() {
     val sharedViewModel: SharedViewModel by lazy{
@@ -27,6 +27,10 @@ class RecipeDetailsFragment: Fragment() {
     val stateObserver = Observer<RecipeDataSourceState> {
         requireActivity().invalidateOptionsMenu()
     }
+    val errorObserver = Observer<String> {
+        Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -42,13 +46,20 @@ class RecipeDetailsFragment: Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        requireActivity().invalidateOptionsMenu()
+        observeData()
+    }
+
+    fun observeData() {
         sharedViewModel.currentRecipe.observe(requireActivity(), recipeObserver)
-        sharedViewModel.state.observe(requireActivity(), stateObserver)
+        sharedViewModel.dataSourceState.observe(requireActivity(), stateObserver)
+        sharedViewModel.error.observe(requireActivity(), errorObserver)
     }
 
     override fun onDestroy() {
         sharedViewModel.currentRecipe.removeObserver(recipeObserver)
-        sharedViewModel.state.removeObserver(stateObserver)
+        sharedViewModel.dataSourceState.removeObserver(stateObserver)
+        sharedViewModel.error.removeObserver(errorObserver)
         super.onDestroy()
     }
 
@@ -56,12 +67,16 @@ class RecipeDetailsFragment: Fragment() {
         title.text = sharedViewModel.recipeTitle
         timeToCook.text = sharedViewModel.recipeTimeToCook
         isVegan.text = sharedViewModel.isVegan
-        Picasso.get().load(sharedViewModel.recipeImage).into(image)
+        if(sharedViewModel.recipeImage.isNotEmpty()) Picasso.get().load(sharedViewModel.recipeImage).into(image)
         ingredientsList.text = sharedViewModel.ingredientsString
         instructions.text = sharedViewModel.instructionsString
+        btnCalculateNutrition.setOnClickListener {
+            sharedViewModel.calculateNutrition()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        menu.clear()
         inflater.inflate(R.menu.recipe_details_menu, menu)
         menu[0].title = sharedViewModel.menuItemTitle
         super.onCreateOptionsMenu(menu, inflater)

@@ -4,7 +4,12 @@
     <string name="title">Title</string>
     <string name="isVegan">Is Vegan:</string>
     <string name="ingredients">Ingredients:</string>
+    <string name="nutrition">Nutrition</string>
     <string name="minutes">minutes</string>
+
+<!--    menus-->
     <string name="menu_title_save">Save</string>
-    <string name="menu_title_delete">Remove</string>
+    <string name="menu_title_delete">Delete</string>
+    <string name="menu_title_sort_name">Sort by name</string>
+    <string name="menu_title_sort_time">Sort by time</string>
 </resources>

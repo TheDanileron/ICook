@@ -9,7 +9,7 @@ import com.project.icook.model.repositories.RecipeRepository
 class RecipeViewModelFactory(val repository:RecipeRepository, val ingredientsRepository: IngredientsRepository,val app: Application): ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if(modelClass.isAssignableFrom(RecipeListViewModel::class.java)){
-            return RecipeListViewModel(repository) as T
+            return RecipeListViewModel(repository, app) as T
         } else if(modelClass.isAssignableFrom(SharedViewModel::class.java)){
             return SharedViewModel(repository,ingredientsRepository, app) as T
         }else {
