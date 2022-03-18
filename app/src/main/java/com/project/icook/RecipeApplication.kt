@@ -20,10 +20,15 @@ import android.app.Application
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.room.Room
-import com.project.icook.model.api.RecipeService
+import com.project.icook.model.api.RecipeApiService
+import com.project.icook.model.db.LocalIngredientDataSource
 import com.project.icook.model.db.LocalRecipeDataSource
+import com.project.icook.model.db.LocalRecipeIngredientDataSource
 import com.project.icook.model.db.RecipeDB
+import com.project.icook.model.repositories.IngredientsRepository
 import com.project.icook.model.repositories.RecipeRepository
+import com.squareup.picasso.OkHttp3Downloader
+import com.squareup.picasso.Picasso
 
 /**
  * An application that lazily provides a repository. Note that this Service Locator pattern is
@@ -34,16 +39,30 @@ import com.project.icook.model.repositories.RecipeRepository
 class RecipeApplication : Application() {
 
     // Depends on the flavor,
-    val recipeRepository: RecipeRepository
-        get() = provideRecipeRepository()
+    val recipeRepository: RecipeRepository by lazy {
+        provideRecipeRepository()
+    }
+    val ingredientsRepository: IngredientsRepository by lazy {
+        provideIngredientsRepository()
+    }
 
     override fun onCreate() {
         super.onCreate()
+        AppLogger.isPrintLog = BuildConfig.DEBUG
+        val builder = Picasso.Builder(this)
+            .downloader(OkHttp3Downloader(this))
+            .indicatorsEnabled(BuildConfig.DEBUG)
+        Picasso.setSingletonInstance(builder.build())
     }
 
     fun provideRecipeRepository(): RecipeRepository {
-        return RecipeRepository(RecipeService.getInstance(),
-            LocalRecipeDataSource(createDataBase(this, true).recipeDao()))
+        return RecipeRepository(RecipeApiService.getInstance(),
+            LocalRecipeDataSource(createDataBase(this, false).recipeDao()),
+                LocalRecipeIngredientDataSource(createDataBase(this, false).recipeIngredientDao()))
+    }
+
+    fun provideIngredientsRepository(): IngredientsRepository {
+        return IngredientsRepository(LocalIngredientDataSource(createDataBase(this, false).ingredientsDao()))
     }
 
     @VisibleForTesting
@@ -60,7 +79,7 @@ class RecipeApplication : Application() {
             // Real database using SQLite
             Room.databaseBuilder(
                 context.applicationContext,
-                RecipeDB::class.java, "Tasks.db"
+                RecipeDB::class.java, Constants.RECIPES_DB
             ).build()
         }
         return result

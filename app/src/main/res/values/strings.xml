@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">ICook</string>
+    <string name="timeToCook">Time to cook:</string>
+    <string name="title">Title</string>
+    <string name="isVegan">Is Vegan:</string>
+    <string name="ingredients">Ingredients:</string>
+    <string name="minutes">minutes</string>
+    <string name="menu_title_save">Save</string>
+    <string name="menu_title_delete">Remove</string>
 </resources>

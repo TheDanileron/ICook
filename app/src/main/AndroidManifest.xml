@@ -13,6 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ICook">
         <activity
+
             android:name=".ui.activities.MainActivity"
             android:exported="true">
             <intent-filter>

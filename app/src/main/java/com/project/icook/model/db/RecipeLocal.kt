@@ -1,13 +1,13 @@
-package com.project.icook.model.data
+package com.project.icook.model.db
 
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
-
-data class Recipe(
-    val id: Long,
+@Entity
+data class RecipeLocal(
+    @PrimaryKey val id: Long,
     val title: String,
     val readyInMinutes: Int,
     @SerializedName("image") val imageUrl: String,
@@ -15,6 +15,4 @@ data class Recipe(
     val instructions: String,
     val isVegan: Boolean,
     val isHealthy: Boolean,
-    var isSaved: Boolean = false,
-    @SerializedName("extendedIngredients")val ingredients: List<Ingredient> = mutableListOf()
 )
