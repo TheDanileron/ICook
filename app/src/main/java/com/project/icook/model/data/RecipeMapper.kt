@@ -1,7 +1,7 @@
 package com.project.icook.model.data
 
 import com.project.icook.model.db.IngredientLocal
-import com.project.icook.model.db.LocalRecipeAndIngredients
+import com.project.icook.model.db.LocalRecipeAndIngredientsRelation
 import com.project.icook.model.db.RecipeLocal
 
 class RecipeMapper {
@@ -23,7 +23,7 @@ class RecipeMapper {
             )
         }
 
-        fun map(recipe: Recipe): RecipeLocal{
+        fun map(recipe: Recipe, isTemp: Boolean = false): RecipeLocal{
             return RecipeLocal(
                 recipe.id,
                 recipe.title,
@@ -33,6 +33,7 @@ class RecipeMapper {
                 recipe.instructions,
                 recipe.isVegan,
                 recipe.isHealthy,
+                isTemp
             )
         }
 
@@ -42,8 +43,8 @@ class RecipeMapper {
             }
         }
 
-        fun mapToRelation(recipe: Recipe): LocalRecipeAndIngredients{
-            return LocalRecipeAndIngredients(
+        fun mapToRelation(recipe: Recipe): LocalRecipeAndIngredientsRelation{
+            return LocalRecipeAndIngredientsRelation(
                 RecipeLocal(
                     recipe.id,
                     recipe.title,
@@ -53,6 +54,7 @@ class RecipeMapper {
                     recipe.instructions,
                     recipe.isVegan,
                     recipe.isHealthy,
+                    false
                 ),
                 recipe.ingredients.map {
                     IngredientLocal(it.id, recipe.id ,it.name, it.unit, it.amount,)

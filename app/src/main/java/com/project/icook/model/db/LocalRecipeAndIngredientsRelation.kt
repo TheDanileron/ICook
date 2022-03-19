@@ -5,7 +5,7 @@ import androidx.room.Relation
 import com.project.icook.model.db.IngredientLocal
 import com.project.icook.model.db.RecipeLocal
 
-data class LocalRecipeAndIngredients(
+data class LocalRecipeAndIngredientsRelation(
     @Embedded
     val recipe: RecipeLocal,
 

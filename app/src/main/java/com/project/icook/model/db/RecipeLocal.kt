@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
 
 @Entity
 data class RecipeLocal(
-    @PrimaryKey val id: Long,
+    @PrimaryKey(autoGenerate = true) val id: Long,
     val title: String,
     val readyInMinutes: Int,
     @SerializedName("image") val imageUrl: String,
@@ -15,4 +15,5 @@ data class RecipeLocal(
     val instructions: String,
     val isVegan: Boolean,
     val isHealthy: Boolean,
+    var isTemp: Boolean
 )

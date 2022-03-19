@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        sharedViewModel.requestNetworkChanges()
+        sharedViewModel.start()
         setupViewPager()
     }
 

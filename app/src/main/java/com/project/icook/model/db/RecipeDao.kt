@@ -13,8 +13,17 @@ public interface RecipeDao {
     @Insert(onConflict = IGNORE)
     fun addRecipe(recipe: RecipeLocal): Long
 
+    @Insert(onConflict = IGNORE)
+    fun addRecipes(recipe: List<RecipeLocal>)
+
     @Delete
     fun removeRecipe(recipe: RecipeLocal): Int
+
+    @Delete
+    fun removeRecipes(recipe: List<RecipeLocal>): Int
+
+    @Query("DELETE FROM RecipeLocal where isTemp = 1")
+    fun removeTempRecipes(): Int
 
     @Update
     fun updateRecipe(recipe: RecipeLocal): Int

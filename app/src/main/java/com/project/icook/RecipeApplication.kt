@@ -18,6 +18,10 @@ package com.project.icook
 
 import android.app.Application
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import androidx.annotation.VisibleForTesting
 import androidx.room.Room
 import com.project.icook.model.api.RecipeApiService
@@ -53,6 +57,38 @@ class RecipeApplication : Application() {
             .downloader(OkHttp3Downloader(this))
             .indicatorsEnabled(BuildConfig.DEBUG)
         Picasso.setSingletonInstance(builder.build())
+
+        requestNetworkChanges()
+    }
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            ConnectionHelper.onNetworkStateChanged(true)
+            super.onAvailable(network)
+        }
+
+        override fun onCapabilitiesChanged(
+            network: Network,
+            networkCapabilities: NetworkCapabilities
+        ) {
+            super.onCapabilitiesChanged(network, networkCapabilities)
+        }
+
+        override fun onLost(network: Network) {
+            ConnectionHelper.onNetworkStateChanged(false)
+            super.onLost(network)
+        }
+    }
+
+
+    fun requestNetworkChanges() {
+        val networkRequest = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .build()
+        val connectivityManager = getSystemService(ConnectivityManager::class.java) as ConnectivityManager
+        connectivityManager.requestNetwork(networkRequest, networkCallback)
     }
 
     fun provideRecipeRepository(): RecipeRepository {

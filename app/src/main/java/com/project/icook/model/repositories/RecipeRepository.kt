@@ -28,16 +28,24 @@ class RecipeRepository(var recipeService: RecipeApiService, var localDataSource:
         return Result.success(relation?.map { RecipeMapper.map(it.recipe, it.ingredients) })
     }
 
-    suspend fun saveRecipe(recipe: Recipe): Result<Long> {
-        return localDataSource.saveRecipe(recipe)
+    suspend fun saveRecipe(recipe: Recipe, isTemp: Boolean): Result<Long> {
+        return localDataSource.saveRecipe(recipe, isTemp)
+    }
+
+    suspend fun saveRecipes(recipes: List<Recipe>): Result<Int> {
+        return localDataSource.saveRecipes(recipes, true)
     }
 
     suspend fun deleteRecipe(recipe: Recipe): Result<Int> {
         return localDataSource.removeRecipe(recipe)
     }
 
-    suspend fun getLocalRecipes() : Result<List<Recipe>?> {
-        val relation = localRecipeIngredientDataSource.getRecipeIngredientList(false).getOrNull()
+    suspend fun deleteTempRecipes(): Result<Int> {
+        return localDataSource.removeTempRecipes()
+    }
+
+    suspend fun getLocalRecipes(isTemp: Boolean) : Result<List<Recipe>?> {
+        val relation = localRecipeIngredientDataSource.getRecipeIngredientList(isTemp).getOrNull()
 
         return Result.success(relation?.map { RecipeMapper.map(it.recipe, it.ingredients) })
     }

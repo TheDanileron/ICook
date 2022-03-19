@@ -66,38 +66,12 @@ class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRep
             return currentRecipe.value?.ingredients?.joinToString("\n") ?: ""
         }
 
-    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
-        override fun onAvailable(network: Network) {
-            ConnectionHelper.onNetworkStateChanged(true)
-            super.onAvailable(network)
-        }
-
-        override fun onCapabilitiesChanged(
-            network: Network,
-            networkCapabilities: NetworkCapabilities
-        ) {
-            super.onCapabilitiesChanged(network, networkCapabilities)
-        }
-
-        override fun onLost(network: Network) {
-            ConnectionHelper.onNetworkStateChanged(false)
-            super.onLost(network)
-        }
-    }
-
-
-    fun requestNetworkChanges() {
-        val networkRequest = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-            .build()
-        val connectivityManager = getApplication<Application>().getSystemService(ConnectivityManager::class.java) as ConnectivityManager
-        connectivityManager.requestNetwork(networkRequest, networkCallback)
-    }
-
     fun onRecipeDataSourceOperationComplete() {
         dataSourceState.postValue(RecipeDataSourceState.IDLE)
+    }
+
+    fun start(){
+        ConnectionHelper.subscribe(this)
     }
 
     fun saveMenuItemPressed() {
@@ -105,14 +79,12 @@ class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRep
             if(!isCurrentRecipeSaved) {
                 dataSourceState.postValue(RecipeDataSourceState.SAVING)
 
-                val id = recipeRepository.saveRecipe(currentRecipe.value!!).getOrNull()
+                val id = recipeRepository.saveRecipe(currentRecipe.value!!, false).getOrNull()
 
                 if (id != null) {
                     currentRecipe.value?.isSaved = true
                     ingredientsRepository.saveIngredients(
-                        RecipeMapper.map(
-                            currentRecipe.value!!.ingredients, id
-                        )
+                        currentRecipe.value!!.ingredients, id
                     )
                 }
 
