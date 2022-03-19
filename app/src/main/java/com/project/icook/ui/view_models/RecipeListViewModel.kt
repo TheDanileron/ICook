@@ -13,6 +13,7 @@ import com.project.icook.model.repositories.IngredientsRepository
 import com.project.icook.model.repositories.RecipeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class RecipeListViewModel(private val recipeRepository: RecipeRepository,private val ingredientsRepository: IngredientsRepository, application: Application): AndroidViewModel(application), OnNetworkAvailabilityListener {
     val TAG = "RecipeViewModel"
@@ -30,7 +31,6 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
                         AppLogger.i(TAG, "Success, data: ${result.getOrDefault(mutableListOf())}")
 
                         result.getOrNull()?.let {
-                            updateTempList(it)
                             onListReceived(it)
                         }
                     } else {
@@ -129,7 +129,11 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
     }
 
     override fun onLost() {
-
+        if(!isSavedList) {
+            viewModelScope.launch(Dispatchers.IO) {
+                updateTempList(recipeList.value!!)
+            }
+        }
     }
 
     fun sortingSwitched(sorting: Sorting) {
