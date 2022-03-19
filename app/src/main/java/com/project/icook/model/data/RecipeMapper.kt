@@ -17,13 +17,14 @@ class RecipeMapper {
                 localRecipe.isVegan,
                 localRecipe.isHealthy,
                 true,
+                localRecipe.isTemp,
                 ingr.map {
                     Ingredient(it.id, it.name, it.unit, it.amount)
                 }
             )
         }
 
-        fun map(recipe: Recipe, isTemp: Boolean = false): RecipeLocal{
+        fun map(recipe: Recipe):RecipeLocal{
             return RecipeLocal(
                 recipe.id,
                 recipe.title,
@@ -33,7 +34,7 @@ class RecipeMapper {
                 recipe.instructions,
                 recipe.isVegan,
                 recipe.isHealthy,
-                isTemp
+                recipe.isTemp
             )
         }
 

@@ -51,7 +51,8 @@ class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRep
         }
     val menuItemTitle: String
         get() {
-            return if(isCurrentRecipeSaved) getApplication<Application>().getString(R.string.menu_title_delete) else getApplication<Application>().getString(R.string.menu_title_save)
+            val isTemp = currentRecipe.value?.isTemp ?: false
+            return if(isCurrentRecipeSaved && !isTemp) getApplication<Application>().getString(R.string.menu_title_delete) else getApplication<Application>().getString(R.string.menu_title_save)
         }
     val instructionsString: String
         get() {
@@ -76,16 +77,21 @@ class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRep
 
     fun saveMenuItemPressed() {
         viewModelScope.launch(Dispatchers.IO) {
-            if(!isCurrentRecipeSaved) {
+            if(!isCurrentRecipeSaved || currentRecipe.value!!.isTemp) {
                 dataSourceState.postValue(RecipeDataSourceState.SAVING)
 
-                val id = recipeRepository.saveRecipe(currentRecipe.value!!, false).getOrNull()
+                if(currentRecipe.value!!.isTemp) {
+                    currentRecipe.value!!.isTemp = false
+                    recipeRepository.updateRecipe(currentRecipe.value!!).getOrNull()
+                } else {
+                    val id = recipeRepository.saveRecipe(currentRecipe.value!!).getOrNull()
 
-                if (id != null) {
-                    currentRecipe.value?.isSaved = true
-                    ingredientsRepository.saveIngredients(
-                        currentRecipe.value!!.ingredients, id
-                    )
+                    if (id != null) {
+                        currentRecipe.value?.isSaved = true
+                        ingredientsRepository.saveIngredients(
+                            currentRecipe.value!!.ingredients, id
+                        )
+                    }
                 }
 
                 onRecipeDataSourceOperationComplete()

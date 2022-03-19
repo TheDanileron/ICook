@@ -94,6 +94,9 @@ class RecipeListFragment(var isLocal: Boolean = false): Fragment(){
             R.id.menu_item_sort_by_time -> {
                 listViewModel.sortingSwitched(RecipeListViewModel.Sorting.BY_TIME)
             }
+            R.id.menu_item_get_random_recipes -> {
+                listViewModel.getRandomRecipeList()
+            }
         }
         return super.onOptionsItemSelected(item)
     }

@@ -13,14 +13,14 @@ val ingredients = listOf<List<Ingredient>>(
 
 val recipes = listOf<Recipe>(
     Recipe(0, "Recipe 1", 10, "noImage", "Recipe 1 summary",
-    "Take all ingredients and mix together", false, false, false,ingredients[0]),
+    "Take all ingredients and mix together", false, false, false,false, ingredients[0]),
     Recipe(0, "Recipe 2", 10, "noImage", "Recipe 2 summary",
-        "Take all ingredients and mix together", false, false, false,ingredients[1]),
+        "Take all ingredients and mix together", false, false, false,false,ingredients[1]),
     Recipe(0, "Recipe 3", 10, "noImage", "Recipe 3 summary",
-        "Take all ingredients and mix together", false, false, false,ingredients[2]),
+        "Take all ingredients and mix together", false, false, false,false,ingredients[2]),
     Recipe(0, "Recipe 4", 10, "noImage", "Recipe4 summary",
-        "Take all ingredients and mix together", false, false, false,ingredients[4]),
+        "Take all ingredients and mix together", false, false, false,false,ingredients[4]),
     Recipe(0, "Recipe 5", 10, "noImage", "Recipe 5 summary",
-        "Take all ingredients and mix together", false, false, false,ingredients[4]))
+        "Take all ingredients and mix together", false, false, false,false,ingredients[4]))
 
 

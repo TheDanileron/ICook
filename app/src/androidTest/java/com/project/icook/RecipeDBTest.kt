@@ -45,6 +45,12 @@ class RecipeDBTest {
         }
     }
 
+    private fun clearDB() {
+        val list = recipeDao.getRecipes()
+
+        recipeDao.removeRecipes(list)
+    }
+
     @Test
     fun testRecipesGet() = runBlocking {
         addTestValues()
@@ -66,7 +72,8 @@ class RecipeDBTest {
         var size = 0
         recipes.forEach {
             size++
-            val id = recipeDao.addRecipe(RecipeMapper.map(it, true))
+            it.isTemp = true
+            val id = recipeDao.addRecipe(RecipeMapper.map(it))
 
             val mappedIngredients = RecipeMapper.map(it.ingredients, id)
             ingredientDao.saveIngredients(mappedIngredients)
@@ -80,9 +87,34 @@ class RecipeDBTest {
     }
 
     @Test
+    fun testAddTempAndGetNonTemp() = runBlocking {
+        clearDB()
+        var size = 0
+        recipes.forEachIndexed { index, it ->
+            if(index <= 2) {
+                it.isTemp = true
+                recipeDao.addRecipe(RecipeMapper.map(it))
+            }
+        }
+        recipes.forEachIndexed { index, it ->
+            if(index > 2) {
+                it.isTemp = false
+                recipeDao.addRecipe(RecipeMapper.map(it))
+            }
+        }
+
+        val list = recipeIngredientRelationDao.getRecipesAndIngredients(false)
+        assert(list.isNotEmpty())
+        list.forEach {
+            assert(!it.recipe.isTemp)
+        }
+    }
+
+    @Test
     fun testRemoveTempRecipes() = runBlocking {
         recipes.forEach {
-            val id = recipeDao.addRecipe(RecipeMapper.map(it, true))
+            it.isTemp = true
+            val id = recipeDao.addRecipe(RecipeMapper.map(it))
 
             val mappedIngredients = RecipeMapper.map(it.ingredients, id)
             ingredientDao.saveIngredients(mappedIngredients)
@@ -91,5 +123,24 @@ class RecipeDBTest {
         recipeDao.removeTempRecipes()
         val list = recipeIngredientRelationDao.getRecipesAndIngredients(true)
         assert(list.isEmpty())
+    }
+
+    @Test
+    fun testMarkRecipeAsNotTemp() = runBlocking {
+        clearDB()
+        recipes[0].let {
+            it.isTemp = true
+            val id = recipeDao.addRecipe(RecipeMapper.map(it))
+
+            it.isTemp = false
+            it.id = id
+            val result = recipeDao.updateRecipe(RecipeMapper.map(it))
+
+            val list = recipeIngredientRelationDao.getRecipesAndIngredients(false)
+
+            assert(list.size == 1)
+            assert(list[0].recipe.id == id)
+            assert(!list[0].recipe.isTemp)
+        }
     }
 }

@@ -28,12 +28,16 @@ class RecipeRepository(var recipeService: RecipeApiService, var localDataSource:
         return Result.success(relation?.map { RecipeMapper.map(it.recipe, it.ingredients) })
     }
 
-    suspend fun saveRecipe(recipe: Recipe, isTemp: Boolean): Result<Long> {
-        return localDataSource.saveRecipe(recipe, isTemp)
+    suspend fun saveRecipe(recipe: Recipe): Result<Long> {
+        return localDataSource.saveRecipe(recipe)
+    }
+
+    suspend fun updateRecipe(recipe: Recipe): Result<Int> {
+        return localDataSource.updateRecipe(recipe)
     }
 
     suspend fun saveRecipes(recipes: List<Recipe>): Result<Int> {
-        return localDataSource.saveRecipes(recipes, true)
+        return localDataSource.saveRecipes(recipes)
     }
 
     suspend fun deleteRecipe(recipe: Recipe): Result<Int> {

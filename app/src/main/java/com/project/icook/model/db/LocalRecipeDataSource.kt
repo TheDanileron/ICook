@@ -9,14 +9,14 @@ class LocalRecipeDataSource(private val recipeDao: RecipeDao) : RecipeDataSource
         TODO("Not yet implemented")
     }
 
-    override suspend fun saveRecipe(recipe: Recipe, isTemp: Boolean): Result<Long> {
-        val id: Long = recipeDao.addRecipe(RecipeMapper.map(recipe, isTemp))
+    override suspend fun saveRecipe(recipe: Recipe): Result<Long> {
+        val id: Long = recipeDao.addRecipe(RecipeMapper.map(recipe))
         return Result.success(id)
     }
 
-    override suspend fun saveRecipes(recipes: List<Recipe>, isTemp: Boolean): Result<Int> {
+    override suspend fun saveRecipes(recipes: List<Recipe>): Result<Int> {
         recipeDao.addRecipes(recipes.map {
-            RecipeMapper.map(it, isTemp)
+            RecipeMapper.map(it)
         })
         return Result.success(recipes.size)
     }

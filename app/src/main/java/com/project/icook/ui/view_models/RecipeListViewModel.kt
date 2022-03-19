@@ -1,10 +1,6 @@
 package com.project.icook.ui.view_models
 
 import android.app.Application
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -22,9 +18,11 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
     val TAG = "RecipeViewModel"
     val recipeList: MutableLiveData<List<Recipe>> = MutableLiveData(mutableListOf())
     var sorting = Sorting.BY_TIME
-    var isLocal: Boolean = false
+    var isSavedList: Boolean = false
 
     fun getRandomRecipeList() {
+        if(isSavedList)
+            return
         viewModelScope.launch(Dispatchers.IO) {
             if(ConnectionHelper.isNetworkAvailable) {
                 recipeRepository.getRandomRecipes().let {result ->
@@ -32,8 +30,8 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
                         AppLogger.i(TAG, "Success, data: ${result.getOrDefault(mutableListOf())}")
 
                         result.getOrNull()?.let {
-                            onListReceived(it)
                             updateTempList(it)
+                            onListReceived(it)
                         }
                     } else {
                         AppLogger.i(TAG, result.toString())
@@ -62,7 +60,9 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
 
     private suspend fun saveTempList(list: List<Recipe>) {
         list.forEach {
-            val id = recipeRepository.saveRecipe(it, true)
+            it.isTemp = true
+            it.isSaved = true
+            val id = recipeRepository.saveRecipe(it)
             ingredientsRepository.saveIngredients(it.ingredients, id.getOrDefault(0))
         }
     }
@@ -85,7 +85,7 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
     }
 
     fun start(isLocal: Boolean){
-        this.isLocal = isLocal
+        this.isSavedList = isLocal
         if(isLocal && recipeList.value!!.isEmpty())  {
             getSavedRecipesList()
         } else{
@@ -104,7 +104,7 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
     fun onCurrentRecipeStateChanged(state: RecipeDataSourceState) {
         when(state){
             RecipeDataSourceState.IDLE -> {
-                if (isLocal) {
+                if (isSavedList) {
                     getSavedRecipesList()
                 }
             }
@@ -113,7 +113,7 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
     }
 
     private fun onListReceived(list: List<Recipe>) {
-        if(isLocal) {
+        if(isSavedList) {
             recipeList.postValue( list.map {
                 it.isSaved = true
                 it
@@ -123,7 +123,7 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
     }
 
     override fun onAvailable() {
-        if(!isLocal && recipeList.value!!.isEmpty()) {
+        if(!isSavedList && recipeList.value!!.isEmpty()) {
             getRandomRecipeList()
         }
     }

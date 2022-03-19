@@ -15,5 +15,5 @@ data class RecipeLocal(
     val instructions: String,
     val isVegan: Boolean,
     val isHealthy: Boolean,
-    var isTemp: Boolean
+    var isTemp: Boolean = false
 )

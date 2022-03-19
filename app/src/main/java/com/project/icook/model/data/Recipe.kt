@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
 
 
 data class Recipe(
-    val id: Long,
+    var id: Long,
     val title: String,
     val readyInMinutes: Int,
     @SerializedName("image") val imageUrl: String,
@@ -16,6 +16,7 @@ data class Recipe(
     val isVegan: Boolean,
     val isHealthy: Boolean,
     var isSaved: Boolean = false,
+    var isTemp: Boolean = false,
     @SerializedName("extendedIngredients")val ingredients: List<Ingredient> = mutableListOf()
 ) {
     // set at the runtime, you can use it inside webview
