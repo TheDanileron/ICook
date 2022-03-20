@@ -7,8 +7,10 @@ import androidx.room.Transaction
 @Dao
 interface RecipeIngredientDao {
     // this method is for saved recipes.
-    @Transaction
+
     @Query("SELECT * FROM RecipeLocal WHERE isTemp = :isTemp")
     fun getRecipesAndIngredients(isTemp: Boolean): List<LocalRecipeAndIngredientsRelation>
 
+    @Query("SELECT * FROM RecipeLocal WHERE id = :id")
+    fun getRecipeAndIngredients(id: Long): LocalRecipeAndIngredientsRelation
 }

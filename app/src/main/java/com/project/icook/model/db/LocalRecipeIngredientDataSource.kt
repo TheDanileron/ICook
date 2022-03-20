@@ -7,4 +7,8 @@ class LocalRecipeIngredientDataSource(private val dao: RecipeIngredientDao): Rec
         return Result.success(dao.getRecipesAndIngredients(isTemp))
     }
 
+    override suspend fun getRecipeIngredient(id: Long): Result<LocalRecipeAndIngredientsRelation> {
+        return Result.success(dao.getRecipeAndIngredients(id))
+    }
+
 }

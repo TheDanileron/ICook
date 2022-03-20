@@ -20,6 +20,14 @@ class RecipeRepository(var recipeService: RecipeApiService, var localDataSource:
        }
    }
 
+    suspend fun getRecipeById(id: Long): Result<Recipe> {
+        val result = localRecipeIngredientDataSource.getRecipeIngredient(id).getOrNull()
+        if(result != null) {
+            return Result.success(RecipeMapper.map(result.recipe, result.ingredients))
+        }
+        return Result.failure(Exception("No such recipe"))
+    }
+
     // each time the user loads the random list of recipes we save that list and if network goes off
     // we should load it
     suspend fun getRandomRecipesLocal(): Result<List<Recipe>?> {
@@ -32,8 +40,10 @@ class RecipeRepository(var recipeService: RecipeApiService, var localDataSource:
         return localDataSource.saveRecipe(recipe)
     }
 
-    suspend fun updateRecipe(recipe: Recipe): Result<Int> {
-        return localDataSource.updateRecipe(recipe)
+    // mark isTemp = false
+    suspend fun saveTempRecipe(recipe: Recipe): Result<Int> {
+        val result = recipe.copy(isTemp = false)
+        return localDataSource.updateRecipe(result)
     }
 
     suspend fun saveRecipes(recipes: List<Recipe>): Result<Int> {

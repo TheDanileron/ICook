@@ -15,7 +15,7 @@ interface RecipeApiService {
         "$rapidApiHostKey: $rapidApiHostValue",
         "$rapidApiKey: $rapidApiKeyValue"
     )
-    fun getRandomRecipes(@Query("number") number: Int = 1) : Call<RecipePreviewListWrapper>
+    fun getRandomRecipes(@Query("number") number: Int = 2) : Call<RecipePreviewListWrapper>
 
     @FormUrlEncoded
     @POST("visualizeNutrition")

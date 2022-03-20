@@ -1,11 +1,8 @@
 package com.project.icook.ui.view_models
 
 import android.app.Application
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.project.icook.AppLogger
@@ -14,7 +11,6 @@ import com.project.icook.OnNetworkAvailabilityListener
 import com.project.icook.R
 import com.project.icook.model.data.Recipe
 import com.project.icook.model.data.RecipeDataSourceState
-import com.project.icook.model.data.RecipeMapper
 import com.project.icook.model.repositories.IngredientsRepository
 import com.project.icook.model.repositories.RecipeRepository
 import kotlinx.coroutines.Dispatchers
@@ -22,9 +18,13 @@ import kotlinx.coroutines.launch
 
 class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRepository: IngredientsRepository, application: Application): AndroidViewModel(application), OnNetworkAvailabilityListener  {
     val TAG = "SharedViewModel"
-    val currentRecipe = MutableLiveData<Recipe>()
-    val dataSourceState = MutableLiveData<RecipeDataSourceState>()
-    val error = MutableLiveData<String>()
+    private val currentRecipe = MutableLiveData<Recipe>()
+    val currentRecipePub: LiveData<Recipe> get() = currentRecipe
+    private val dataSourceState = MutableLiveData<RecipeDataSourceState>()
+    val dataSourceStatePub: LiveData<RecipeDataSourceState> get() = dataSourceState
+    private val error = MutableLiveData<String>()
+    val errorPub: LiveData<String> get() = error
+
     val recipeTitle: String
         get() {
             return currentRecipe.value?.title ?: ""
@@ -77,33 +77,45 @@ class SharedViewModel(val recipeRepository: RecipeRepository, val ingredientsRep
 
     fun saveMenuItemPressed() {
         viewModelScope.launch(Dispatchers.IO) {
-            if(!isCurrentRecipeSaved || currentRecipe.value!!.isTemp) {
+            var id: Long = -1
+            if(!isCurrentRecipeSaved) {
                 dataSourceState.postValue(RecipeDataSourceState.SAVING)
+                id = recipeRepository.saveRecipe(currentRecipe.value!!).getOrDefault(-1)
 
-                if(currentRecipe.value!!.isTemp) {
-                    currentRecipe.value!!.isTemp = false
-                    recipeRepository.updateRecipe(currentRecipe.value!!).getOrNull()
-                } else {
-                    val id = recipeRepository.saveRecipe(currentRecipe.value!!).getOrNull()
-
-                    if (id != null) {
-                        currentRecipe.value?.isSaved = true
-                        ingredientsRepository.saveIngredients(
-                            currentRecipe.value!!.ingredients, id
-                        )
-                    }
+                if (id > 0) {
+                    ingredientsRepository.saveIngredients(
+                        currentRecipe.value!!.ingredients, id
+                    )
                 }
 
-                onRecipeDataSourceOperationComplete()
-            }else {
+                updateCurrentRecipe(id)
+            } else if(currentRecipe.value!!.isTemp) {
+                dataSourceState.postValue(RecipeDataSourceState.SAVING)
+                id = currentRecipe.value!!.id
+                recipeRepository.saveTempRecipe(currentRecipe.value!!)
+
+                updateCurrentRecipe(id)
+            } else {
                 dataSourceState.postValue(RecipeDataSourceState.DELETING)
 
                 recipeRepository.deleteRecipe(currentRecipe.value!!).getOrNull()
-                currentRecipe.value?.isSaved = false
 
-                onRecipeDataSourceOperationComplete()
+                currentRecipe.postValue(currentRecipe.value!!.copy(isSaved = false))
+            }
+
+            onRecipeDataSourceOperationComplete()
         }
     }
+
+    fun onOpenRecipeDetails(recipe: Recipe) {
+        currentRecipe.postValue(recipe)
+    }
+
+    suspend fun updateCurrentRecipe(id: Long) {
+        if(id < 0)
+            return
+        val recipe = recipeRepository.getRecipeById(id).getOrNull()
+        currentRecipe.postValue(recipe)
     }
 
     fun calculateNutrition() {

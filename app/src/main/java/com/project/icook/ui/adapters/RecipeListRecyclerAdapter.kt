@@ -17,7 +17,7 @@ class RecipeListRecyclerAdapter(val viewModel: SharedViewModel, val callback:() 
     override fun onBindViewHolder(holder: RecipeViewHolder, position: Int) {
         holder.bind(recipes[position])
         holder.v.setOnClickListener {
-            viewModel.currentRecipe.value = recipes[position]
+            viewModel.onOpenRecipeDetails(recipes[position])
             callback()
         }
     }

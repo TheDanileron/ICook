@@ -2,6 +2,7 @@ package com.project.icook.ui.view_models
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.project.icook.AppLogger
@@ -17,7 +18,8 @@ import kotlinx.coroutines.withContext
 
 class RecipeListViewModel(private val recipeRepository: RecipeRepository,private val ingredientsRepository: IngredientsRepository, application: Application): AndroidViewModel(application), OnNetworkAvailabilityListener {
     val TAG = "RecipeViewModel"
-    val recipeList: MutableLiveData<List<Recipe>> = MutableLiveData(mutableListOf())
+    private val recipeList: MutableLiveData<List<Recipe>> = MutableLiveData(mutableListOf())
+    val recipeListPub: LiveData<List<Recipe>> get() = recipeList
     var sorting = Sorting.BY_TIME
     var isSavedList: Boolean = false
 
@@ -60,10 +62,9 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
 
     private suspend fun saveTempList(list: List<Recipe>) {
         list.forEach {
-            it.isTemp = true
-            it.isSaved = true
-            val id = recipeRepository.saveRecipe(it)
-            ingredientsRepository.saveIngredients(it.ingredients, id.getOrDefault(0))
+            val recipe = it.copy(isTemp = true)
+            val id = recipeRepository.saveRecipe(recipe)
+            ingredientsRepository.saveIngredients(recipe.ingredients, id.getOrDefault(0))
         }
     }
 
@@ -113,16 +114,11 @@ class RecipeListViewModel(private val recipeRepository: RecipeRepository,private
     }
 
     private fun onListReceived(list: List<Recipe>) {
-        if(isSavedList) {
-            recipeList.postValue( list.map {
-                it.isSaved = true
-                it
-            })
-        }
         recipeList.postValue(list)
     }
 
     override fun onAvailable() {
+        // if the list is empty the update it when network is available
         if(!isSavedList && recipeList.value!!.isEmpty()) {
             getRandomRecipeList()
         }

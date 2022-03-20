@@ -16,7 +16,7 @@ import com.project.icook.ui.view_models.RecipeViewModelFactory
 import com.project.icook.ui.view_models.SharedViewModel
 import kotlinx.android.synthetic.main.fragment_recipe_list.*
 
-class RecipeListFragment(var isLocal: Boolean = false): Fragment(){
+class RecipeListFragment(var isSavedList: Boolean = false): Fragment(){
     val listViewModel: RecipeListViewModel by lazy{
         val application = (requireContext().applicationContext as RecipeApplication)
         ViewModelProvider(this, RecipeViewModelFactory(application.recipeRepository,application.ingredientsRepository, application)).get(RecipeListViewModel::class.java)}
@@ -40,14 +40,14 @@ class RecipeListFragment(var isLocal: Boolean = false): Fragment(){
         setupRecycler()
 
         if(savedInstanceState != null) {
-            isLocal = savedInstanceState.getBoolean(Constants.IS_LOCAL_KEY, isLocal)
+            isSavedList = savedInstanceState.getBoolean(Constants.IS_LOCAL_KEY, isSavedList)
         }
-        listViewModel.start(isLocal)
+        listViewModel.start(isSavedList)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(Constants.IS_LOCAL_KEY, isLocal)
+        outState.putBoolean(Constants.IS_LOCAL_KEY, isSavedList)
     }
 
     fun setupRecycler() {
@@ -59,12 +59,12 @@ class RecipeListFragment(var isLocal: Boolean = false): Fragment(){
     }
 
     fun observeRecipeList() {
-        listViewModel.recipeList.observe(viewLifecycleOwner) {
+        listViewModel.recipeListPub.observe(viewLifecycleOwner) {
             onListReceived(it)
         }
 
-        if(isLocal) {
-            sharedViewModel.dataSourceState.observe(requireActivity()) {
+        if(isSavedList) {
+            sharedViewModel.dataSourceStatePub.observe(requireActivity()) {
                 listViewModel.onCurrentRecipeStateChanged(it)
             }
         }

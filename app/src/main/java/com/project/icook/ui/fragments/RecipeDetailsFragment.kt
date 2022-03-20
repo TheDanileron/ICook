@@ -51,15 +51,15 @@ class RecipeDetailsFragment: Fragment() {
     }
 
     fun observeData() {
-        sharedViewModel.currentRecipe.observe(requireActivity(), recipeObserver)
-        sharedViewModel.dataSourceState.observe(requireActivity(), stateObserver)
-        sharedViewModel.error.observe(requireActivity(), errorObserver)
+        sharedViewModel.currentRecipePub.observe(requireActivity(), recipeObserver)
+        sharedViewModel.dataSourceStatePub.observe(requireActivity(), stateObserver)
+        sharedViewModel.errorPub.observe(requireActivity(), errorObserver)
     }
 
     override fun onDestroy() {
-        sharedViewModel.currentRecipe.removeObserver(recipeObserver)
-        sharedViewModel.dataSourceState.removeObserver(stateObserver)
-        sharedViewModel.error.removeObserver(errorObserver)
+        sharedViewModel.currentRecipePub.removeObserver(recipeObserver)
+        sharedViewModel.dataSourceStatePub.removeObserver(stateObserver)
+        sharedViewModel.errorPub.removeObserver(errorObserver)
         super.onDestroy()
     }
 
